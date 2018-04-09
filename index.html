@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+
+<html lang="en-us">
+
+  <head>
+
+    <meta charset="UTF-8">
+    <title>Train Schedule Activity</title>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+ 
+
+    <!-- Firebase Reference -->
+    <script src="XXXXXXXXXXXXX"></script>
+
+    <!-- Moment.js Reference -->
+    <script src="http://momentjs.com/downloads/moment.js"></script>
+    <script src="https://cdn.jsdelivr.net/momentjs/2.12.0/moment.min.js"></script>
+
+  </head>
+
+  <body>
+
+    <!-- Train Tracker -->
+    <div class="container">
+
+      <!-- Jumbotron -->
+      <div class="jumbotron" style="background-color: black; color: white">
+        <h1 class="text-center">Train Schedule</h1>
+        <h3 class="text-center">Check below for the next arival</h3>
+      </div>
+
+      <div class="row">
+
+        <div class="col-lg-12">
+
+        <!-- Current Train List-->
+          <div class="panel panel-primary">
+            <div class="panel-heading">
+              <h3 class="panel-title"><strong>Current Train Schedule</strong></h3>
+            </div>
+            <div class="panel-body">
+              <table class="table table-hover" id='train-table'>
+                <thead>
+                  <tr>
+                    <th>Train Name</th>
+                    <th>Destination</th>
+                    <th>Frequency (min)</th>
+                    <th>Next arrival</th>
+                    <th>Minutes away</th>
+                  </tr>
+                </thead>
+                <tbody id="train-data">
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Add Trian  -->
+          <div class="panel panel-primary">
+            <div class="panel-heading">
+              <h3 class="panel-title"><strong>Add Train</strong></h3>
+            </div>
+            <div class="panel-body">
+
+              <!-- Entry Form -->
+              <form>
+                <div class="form-group">
+                  <label for="train-name-input">Train Name</label>
+                  <input class="form-control" id="train-name-input" type="text">
+                </div>
+                <div class="form-group">
+                  <label for="destination-input">Destination</label>
+                  <input class="form-control" id="destination-input" type="text">
+                </div>
+                <div class="form-group">
+                  <label for="time-input">First Train Time (HH:mm - military time)</label>
+                  <input class="form-control" id="time-input" type="text">
+                </div>
+                <div class="form-group">
+                  <label for="frequency-input">Frequency (min)</label>
+                  <input class="form-control" id="frequency-input" type="text">
+                </div>
+                <button class="btn btn-primary" id="add-train-btn" type="submit">Submit</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- JavaScript -->
+    
+    <script src="https://www.gstatic.com/firebasejs/4.12.1/firebase.js"></script>
+
+    <script>
+    // Initialize Firebase
+    var config = {
+        apiKey: "AIzaSyBCv-ZeWslqcLDiZlzLIU_ppYbFH6nMeug",
+        authDomain: "train-schedule-a6a67.firebaseapp.com",
+        databaseURL: "https://train-schedule-a6a67.firebaseio.com",
+        projectId: "train-schedule-a6a67",
+        storageBucket: "",
+        messagingSenderId: "932346733823"
+    };
+
+    firebase.initializeApp(config);
+    
+    var database = firebase.database();
+
+    // 2. Button for adding Trains
+    $("#add-train-btn").on("click", function(event) {
+        event.preventDefault();
+
+    // Grabs user input
+        var trainName = $("#train-name-input").val().trim();
+        var trainDest = $("#destination-input").val().trim();
+        var trainTime = moment($("#time-input").val().trim(), "HH:mm").format("X");
+        var trainFreq = $("#frequency-input").val().trim();
+
+        // Creates local "temporary" object for holding train data
+        var newTrain = {
+            name: trainName,
+            dest: trainDest,
+            time: trainTime,
+            freq: trainFreq
+        };
+
+        // Uploads train data to the database
+        database.ref().push(newTrain);
+
+        // Logs everything to console
+        console.log(newTrain.name);
+        console.log(newTrain.dest);
+        console.log(newTrain.time);
+        console.log(newTrain.freq);
+
+        // Alert
+        alert("Train successfully added");
+
+        // Clears all of the text-boxes
+        $("#train-name-input").val("");
+        $("#destination-input").val("");
+        $("#time-input").val("");
+        $("#frequency-input").val("");
+    });
+
+    // 3. Create Firebase event for adding train to the database and a row in the html when a user adds an entry
+    database.ref().on("child_added", function(childSnapshot, prevChildKey) {
+
+        console.log(childSnapshot.val());
+
+        // Store everything into a variable.
+        var trainName = childSnapshot.val().name;
+        var trainDest = childSnapshot.val().dest;
+        var trainTime = childSnapshot.val().time;
+        var trainFreq = childSnapshot.val().freq;
+
+        // Train Info
+        console.log(trainName);
+        console.log(trainDest);
+        console.log(trainTime);
+        console.log(trainFreq);
+
+        // Prettify the train start
+        var empStartPretty = moment.unix(empTime).format("HH:mm");
+
+        // Calculate the months worked using hardcore math
+        // To calculate the months worked
+        var empMonths = moment().diff(moment.unix(empTime, "X"), "months");
+        console.log(empMonths);
+
+        // Calculate the total billed rate
+        var empBilled = empMonths * empFreq;
+        console.log(empBilled);
+
+        // Add each train's data into the table
+        $("#train-data").append("<tr><td>" + trainName + "</td><td>" + trainDest + "</td><td>" +
+        empStartPretty + "</td><td>" + empMonths + "</td><td>" + trainFreq + "</td><td>" + empBilled + "</td></tr>");
+    });
+
+    // Frequency is user input
+    // take the user freq input in min and continues adding to the first arrival time
+    // takes current time of user and subtracts it from next arrival to get minutes away
+
+
+    
+    </script>
+
+  </body>
+</html>
