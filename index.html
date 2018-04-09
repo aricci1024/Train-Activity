@@ -13,7 +13,7 @@
  
 
     <!-- Firebase Reference -->
-    <script src="XXXXXXXXXXXXX"></script>
+    
 
     <!-- Moment.js Reference -->
     <script src="http://momentjs.com/downloads/moment.js"></script>
@@ -131,15 +131,6 @@
         // Uploads train data to the database
         database.ref().push(newTrain);
 
-        // Logs everything to console
-        console.log(newTrain.name);
-        console.log(newTrain.dest);
-        console.log(newTrain.time);
-        console.log(newTrain.freq);
-
-        // Alert
-        alert("Train successfully added");
-
         // Clears all of the text-boxes
         $("#train-name-input").val("");
         $("#destination-input").val("");
@@ -150,43 +141,50 @@
     // 3. Create Firebase event for adding train to the database and a row in the html when a user adds an entry
     database.ref().on("child_added", function(childSnapshot, prevChildKey) {
 
-        console.log(childSnapshot.val());
-
         // Store everything into a variable.
         var trainName = childSnapshot.val().name;
         var trainDest = childSnapshot.val().dest;
         var trainTime = childSnapshot.val().time;
         var trainFreq = childSnapshot.val().freq;
 
-        // Train Info
-        console.log(trainName);
-        console.log(trainDest);
-        console.log(trainTime);
-        console.log(trainFreq);
+        // Train arrival Math
+            // freq min - current min = difference
+            // difference % freq min = remainder
+            // freq min - remiander = minutes away
+            // min away + current time = arrival time
 
-        // Prettify the train start
-        var empStartPretty = moment.unix(empTime).format("HH:mm");
+        // User inputs train arrival frequency
+        var tFrequency = trainFreq;
 
-        // Calculate the months worked using hardcore math
-        // To calculate the months worked
-        var empMonths = moment().diff(moment.unix(empTime, "X"), "months");
-        console.log(empMonths);
+        // User input of Train time
+        var firstTrain = trainTime;
 
-        // Calculate the total billed rate
-        var empBilled = empMonths * empFreq;
-        console.log(empBilled);
+        // First Time -- pushed back 1 year
+        var convertFirstTrain = moment(firstTrain, "HH:mm").subtract(1, "years");
 
-        // Add each train's data into the table
+        // Users current time
+        var currentTime = moment().format("hh:mm");
+
+        // Difference between the times
+        var diffTime = moment().diff(moment(convertFirstTrain), "minutes");
+
+        // Time apart (remainder)
+        var tRemainder = diffTime % tFrequency;
+
+        // Min until train arrives
+        var minutesAway = tFrequency - tRemainder;
+
+        // Arrival time of next train
+        var nextTrain = moment().add(minutesAway, "minutes");
+        var trainArrival = moment(nextTrain).format("hh:mm A")
+
+        // Add each train data to the table
         $("#train-data").append("<tr><td>" + trainName + "</td><td>" + trainDest + "</td><td>" +
-        empStartPretty + "</td><td>" + empMonths + "</td><td>" + trainFreq + "</td><td>" + empBilled + "</td></tr>");
+        trainFreq + "</td><td>" + trainArrival + "</td><td>" + minutesAway + "</td></tr>");
     });
 
-    // Frequency is user input
-    // take the user freq input in min and continues adding to the first arrival time
-    // takes current time of user and subtracts it from next arrival to get minutes away
 
-
-    
+  </script>
     </script>
 
   </body>
